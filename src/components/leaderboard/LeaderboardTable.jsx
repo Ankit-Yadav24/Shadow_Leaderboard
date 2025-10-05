@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Table,
   TableCell,
@@ -8,8 +8,14 @@ import {
 } from "../../components/ui/table";
 import Pagination from "./Pagination";
 import { motion, AnimatePresence } from "framer-motion";
-import UserAvatar from "../common/UserAvatar";
-import { getSubjectScore, formatAccuracy, cn } from "../../lib/utils";
+import UserAvatar from "../shared/UserAvatar";
+import {
+  getSubjectScore,
+  formatAccuracy,
+  cn,
+  sortLeaderboardData,
+} from "../../lib/utils";
+import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 
 const LeaderboardTable = ({
   leaderboardData,
@@ -21,7 +27,35 @@ const LeaderboardTable = ({
   hidePagination = false,
   showCurrentUserAsLastRow = false,
   currentUserData,
+  maxHeight = "600px",
 }) => {
+  const [sortField, setSortField] = useState("rank");
+  const [sortDirection, setSortDirection] = useState("asc");
+
+  const sortedData = useMemo(() => {
+    return sortLeaderboardData(leaderboardData, sortField, sortDirection);
+  }, [leaderboardData, sortField, sortDirection]);
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection(field === "rank" ? "asc" : "desc");
+    }
+  };
+
+  const getSortIcon = (field) => {
+    if (sortField !== field) {
+      return <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />;
+    }
+    return sortDirection === "asc" ? (
+      <ChevronUp className="h-4 w-4 text-primary" />
+    ) : (
+      <ChevronDown className="h-4 w-4 text-primary" />
+    );
+  };
+
   const columnHeaders = useMemo(() => {
     return [
       {
@@ -29,42 +63,49 @@ const LeaderboardTable = ({
         name: "Rank",
         width: "min-w-[94px] w-[94px]",
         style: "text-foreground",
+        sortable: true,
       },
       {
-        id: "student",
+        id: "name",
         name: "Student Name",
         width: "flex-1 min-w-[150px]",
         style: "text-foreground",
+        sortable: true,
       },
       {
-        id: "overall",
+        id: "totalScore",
         name: "Overall Score",
         width: "min-w-[128px] w-[128px]",
         style: "text-foreground",
+        sortable: true,
       },
       {
-        id: "phy",
+        id: "physics",
         name: "Phy",
         width: "min-w-[104px] w-[104px]",
         style: "text-muted-foreground",
+        sortable: true,
       },
       {
-        id: "chem",
+        id: "chemistry",
         name: "Chem",
         width: "min-w-[104px] w-[104px]",
         style: "text-muted-foreground",
+        sortable: true,
       },
       {
         id: "maths",
         name: "Maths",
         width: "min-w-[104px] w-[104px]",
         style: "text-muted-foreground",
+        sortable: true,
       },
       {
         id: "accuracy",
         name: "Accuracy",
         width: "min-w-[104px] w-[104px]",
         style: "text-muted-foreground",
+        sortable: true,
       },
     ];
   }, []);
@@ -133,16 +174,29 @@ const LeaderboardTable = ({
 
   const renderCurrentUserAsTableRow = (user) => (
     <motion.tr
-      className="border-t-2 border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10"
-      style={{ borderColor: "var(--primary)" }}
+      className="border-t-2 sticky bottom-0 z-10"
+      style={{
+        borderColor: "var(--q3-stroke-normal)",
+        background: "var(--q3-surface-dimmest)",
+        backdropFilter: "blur(30px)",
+        boxShadow: "0 -4px 12px rgba(0, 0, 0, 0.08)",
+      }}
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
       <TableCell className="text-center border-0 py-4">
         <div className="flex justify-center">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary text-primary-foreground font-bold text-sm shadow-lg">
-            {user.rank}
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center border"
+            style={{
+              background: "var(--q3-surface-dim)",
+              borderColor: "var(--q3-stroke-light)",
+            }}
+          >
+            <span className="text-xs font-medium text-foreground">
+              {user.rank}
+            </span>
           </div>
         </div>
       </TableCell>
@@ -153,147 +207,156 @@ const LeaderboardTable = ({
             <span className="font-bold text-sm text-foreground">
               {user.userId.name}
             </span>
-            <span className="px-2 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
-              You
-            </span>
+            <span className="text-primary">(You)</span>
           </div>
         </div>
       </TableCell>
       <TableCell className="text-center border-0 py-4">
-        <div className="inline-flex items-center gap-1 px-3 py-2 rounded-full bg-primary/20 border border-primary/30">
-          <span className="font-bold text-base text-foreground">
-            {user.totalMarkScored}
-          </span>
-          <span className="text-xs font-medium text-muted-foreground">/</span>
-          <span className="text-xs font-medium text-muted-foreground">300</span>
-        </div>
+        {renderScore(user.totalMarkScored, 300)}
       </TableCell>
       <TableCell className="text-center border-0 py-4">
-        {getSubjectScore(user, "physics")}
+        {renderScore(getSubjectScore(user, "physics"))}
       </TableCell>
       <TableCell className="text-center border-0 py-4">
-        {getSubjectScore(user, "chemistry")}
+        {renderScore(getSubjectScore(user, "chemistry"))}
       </TableCell>
       <TableCell className="text-center border-0 py-4">
-        {getSubjectScore(user, "math")}
+        {renderScore(getSubjectScore(user, "math"))}
       </TableCell>
       <TableCell className="text-center border-0 py-4">
-        {formatAccuracy(user.accuracy)}
+        {renderAccuracy(user.accuracy)}
       </TableCell>
     </motion.tr>
   );
 
   return (
     <motion.div
-      className="border rounded-xl overflow-x-auto mb-10"
+      className="border rounded-xl overflow-hidden"
       style={{ borderColor: "var(--q3-stroke-normal)" }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Table>
-        <TableHeader>
-          <TableRow
-            className="border-0"
+      <div className="overflow-auto scrollbar-hide" style={{ maxHeight }}>
+        <Table>
+          <TableHeader
+            className="sticky top-0"
             style={{
               background: "var(--q3-surface-dim)",
               borderBottom: "1px solid var(--q3-stroke-light)",
             }}
           >
-            {columnHeaders.map((header) => (
-              <TableHead
-                key={header.id}
-                className={`${header.width} text-center h-16 font-medium text-sm ${header.style} border-0`}
-              >
-                {header.name}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-
-        <AnimatePresence mode="wait">
-          <motion.tbody
-            key={`page-${currentPage}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {leaderboardData.map((entry, index) => {
-              const isCurrentUser = entry.userId._id === currentUserId;
-              return (
-                <motion.tr
-                  key={entry.userId._id}
-                  data-current-user={isCurrentUser ? "true" : "false"}
-                  className={cn(
-                    "border-t h-16 transition-colors duration-300",
-                    isCurrentUser
-                      ? "[animation:highlightRow_2s_ease-in-out]"
-                      : "transition-all duration-200 ease-in-out hover:bg-[var(--q3-surface-dim)] hover:translate-y-[-2px] hover:shadow-[0_2px_8px_rgba(0,0,0,0.05)] dark:hover:bg-[var(--q3-surface-dimmer)] dark:hover:shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
-                  )}
-                  style={{
-                    borderColor: "var(--q3-stroke-normal)",
-                    background: isCurrentUser
-                      ? "var(--primary-foreground)"
-                      : "transparent",
-                  }}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.3,
-                    delay: index * 0.05,
-                    ease: "easeOut",
-                  }}
+            <TableRow className="border-0">
+              {columnHeaders.map((header) => (
+                <TableHead
+                  key={header.id}
+                  className={`${
+                    header.width
+                  } text-center h-16 font-medium text-sm ${
+                    header.style
+                  } border-0 ${
+                    header.sortable
+                      ? "cursor-pointer hover:bg-background/50 transition-colors"
+                      : ""
+                  }`}
+                  onClick={
+                    header.sortable ? () => handleSort(header.id) : undefined
+                  }
                 >
-                  <TableCell className="text-center border-0 py-0">
-                    {renderRankBadge(startingRank + index)}
-                  </TableCell>
-                  <TableCell className="text-left border-0 py-0">
-                    {renderUserInfo(entry)}
-                  </TableCell>
-                  <TableCell className="text-center border-0 py-0">
-                    {renderScore(entry.totalMarkScored, 300)}
-                  </TableCell>
-                  <TableCell className="text-center border-0 py-0">
-                    {renderScore(getSubjectScore(entry, "physics"))}
-                  </TableCell>
-                  <TableCell className="text-center border-0 py-0">
-                    {renderScore(getSubjectScore(entry, "chemistry"))}
-                  </TableCell>
-                  <TableCell className="text-center border-0 py-0">
-                    {renderScore(getSubjectScore(entry, "math"))}
-                  </TableCell>
-                  <TableCell className="text-center border-0 py-0">
-                    {renderAccuracy(entry.accuracy)}
-                  </TableCell>
-                </motion.tr>
-              );
-            })}
+                  <div
+                    className={`flex items-center gap-2 ${
+                      header.name === "Student Name"
+                        ? "justify-start ml-14"
+                        : "justify-center"
+                    }`}
+                  >
+                    {header.name}
+                    {header.sortable && getSortIcon(header.id)}
+                  </div>
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
 
-            {showCurrentUserAsLastRow &&
-              currentUserData &&
-              renderCurrentUserAsTableRow(currentUserData)}
+          <AnimatePresence mode="wait">
+            <motion.tbody
+              key={`page-${currentPage}-${sortField}-${sortDirection}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {sortedData.map((entry, index) => {
+                const isCurrentUser = entry.userId._id === currentUserId;
+                return (
+                  <motion.tr
+                    key={entry.userId._id}
+                    data-current-user={isCurrentUser ? "true" : "false"}
+                    className={cn(
+                      "border-t h-16 transition-colors duration-300",
+                      isCurrentUser
+                        ? "[animation:highlightRow_2s_ease-out] dark:[animation:highlightRowDark_2s_ease-out]"
+                        : "transition-all duration-200 ease-in-out hover:bg-[var(--q3-surface-dim)] hover:translate-y-[-2px] hover:shadow-[0_2px_8px_rgba(0,0,0,0.05)] dark:hover:bg-[var(--q3-surface-dimmer)] dark:hover:shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
+                    )}
+                    style={{
+                      borderColor: "var(--q3-stroke-normal)",
+                      background: isCurrentUser
+                        ? "var(--primary-foreground)"
+                        : "transparent",
+                    }}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.3,
+                      delay: index * 0.05,
+                      ease: "easeOut",
+                    }}
+                  >
+                    <TableCell className="text-center border-0 py-0">
+                      {renderRankBadge(startingRank + index)}
+                    </TableCell>
+                    <TableCell className="text-left border-0 py-0">
+                      {renderUserInfo(entry)}
+                    </TableCell>
+                    <TableCell className="text-center border-0 py-0">
+                      {renderScore(entry.totalMarkScored, 300)}
+                    </TableCell>
+                    <TableCell className="text-center border-0 py-0">
+                      {renderScore(getSubjectScore(entry, "physics"))}
+                    </TableCell>
+                    <TableCell className="text-center border-0 py-0">
+                      {renderScore(getSubjectScore(entry, "chemistry"))}
+                    </TableCell>
+                    <TableCell className="text-center border-0 py-0">
+                      {renderScore(getSubjectScore(entry, "math"))}
+                    </TableCell>
+                    <TableCell className="text-center border-0 py-0">
+                      {renderAccuracy(entry.accuracy)}
+                    </TableCell>
+                  </motion.tr>
+                );
+              })}
 
-            {!hidePagination && (
-              <motion.tr
-                className="border-t h-auto"
-                style={{ borderColor: "var(--q3-stroke-normal)" }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3, delay: 0.3 }}
-              >
-                <TableCell colSpan={7} className="p-0">
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={onPageChange}
-                  />
-                </TableCell>
-              </motion.tr>
-            )}
-          </motion.tbody>
-        </AnimatePresence>
-      </Table>
+              {showCurrentUserAsLastRow &&
+                currentUserData &&
+                renderCurrentUserAsTableRow(currentUserData)}
+            </motion.tbody>
+          </AnimatePresence>
+        </Table>
+      </div>
+
+      {!hidePagination && (
+        <div
+          className="border-t px-4"
+          style={{ borderColor: "var(--q3-stroke-normal)" }}
+        >
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={onPageChange}
+          />
+        </div>
+      )}
     </motion.div>
   );
 };

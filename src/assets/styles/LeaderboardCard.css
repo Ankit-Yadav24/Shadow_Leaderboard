@@ -8,9 +8,9 @@
 }
 
 .leaderboard-card--current-user {
-  background: var(--q3-surface-dimmest) padding-box,
+  background: var(--current-user-bg) padding-box,
     var(--current-user-border) border-box;
-  border: 1px solid transparent;
+  border: 2px solid transparent;
   border-radius: 24px 24px 0 0;
 }
 
@@ -44,7 +44,7 @@
 }
 
 .rank-badge--current-user {
-  background: var(--q3-surface-dim);
+  background: var(--q3-neutral-light-v3);
   color: var(--q3-neutral-default);
 }
 
