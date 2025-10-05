@@ -27,10 +27,14 @@ const iconMap = {
   "maths-icon": MathOperations,
 };
 
+import Medal1st from "../../assets/icons/1st-place-medal.svg";
+import Medal2nd from "../../assets/icons/2nd-place-medal.svg";
+import Medal3rd from "../../assets/icons/3rd-place-medal.svg";
+
 const medalIcons = {
-  "1st-place-medal": "Medal1st",
-  "2nd-place-medal": "Medal2nd",
-  "3rd-place-medal": "Medal3d",
+  "1st-place-medal": Medal1st,
+  "2nd-place-medal": Medal2nd,
+  "3rd-place-medal": Medal3rd,
 };
 
 const Icon = ({
@@ -40,7 +44,7 @@ const Icon = ({
   color,
   className = "",
 }) => {
-  if (medalIcons[name]) {
+  if (name in medalIcons) {
     return (
       <img
         src={medalIcons[name]}
@@ -56,6 +60,7 @@ const Icon = ({
 
   if (IconComponent) {
     const iconColor = color || iconColorMap[name] || "currentColor";
+
     return (
       <IconComponent
         size={size}

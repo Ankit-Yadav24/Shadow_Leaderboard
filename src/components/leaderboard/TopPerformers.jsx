@@ -31,7 +31,7 @@ const TopPerformers = ({ topThree, currentUser, onAnalyticsClick }) => {
     <div className="space-y-4">
       <div className="flex justify-end px-3 sm:px-6">
         <div className="flex items-center gap-2">
-          <Button
+          {/* <Button
             variant="outline"
             size="sm"
             onClick={onAnalyticsClick}
@@ -39,7 +39,7 @@ const TopPerformers = ({ topThree, currentUser, onAnalyticsClick }) => {
           >
             <ChartBar size={16} />
             <span className="hidden sm:inline">Analytics</span>
-          </Button>
+          </Button> */}
 
           {currentUser && (
             <>
