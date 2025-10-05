@@ -1,12 +1,12 @@
-import clsx from "clsx";
+import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-// Utility to merge class names
+// Helper to merge Tailwind classes
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-// Get score for a specific subject from a leaderboard entry
+// Get score of a subject from a leaderboard entry
 export function getSubjectScore(entry, subjectType) {
   const subject = entry.subjects.find((s) =>
     s.subjectId.title.toLowerCase().includes(subjectType.toLowerCase())
@@ -14,40 +14,34 @@ export function getSubjectScore(entry, subjectType) {
   return subject ? subject.totalMarkScored : 0;
 }
 
-// Format accuracy as string with 2 decimals
+// Format accuracy number to string with %
 export function formatAccuracy(accuracy) {
   return `${accuracy.toFixed(2)}%`;
 }
 
-// Pagination helper
+// Generate page numbers for pagination
 export function getPageNumbers(currentPage, totalPages) {
   const pageNumbers = [];
 
-  if (currentPage > 1) {
-    pageNumbers.push(1);
-  }
+  if (currentPage > 1) pageNumbers.push(1);
 
   for (
     let i = Math.max(1, currentPage - 1);
     i <= Math.min(totalPages, currentPage + 1);
     i++
   ) {
-    if (!pageNumbers.includes(i)) {
-      pageNumbers.push(i);
-    }
+    if (!pageNumbers.includes(i)) pageNumbers.push(i);
   }
 
   if (currentPage < totalPages - 1) {
-    if (currentPage < totalPages - 2) {
-      pageNumbers.push("...");
-    }
+    if (currentPage < totalPages - 2) pageNumbers.push("...");
     pageNumbers.push(totalPages);
   }
 
   return pageNumbers;
 }
 
-// Mock current user info
+// Mock current user info from leaderboard
 export function getMockCurrentUser(data) {
   if (data.length > 0) {
     const randomIndex = Math.floor(Math.random() * data.length);
@@ -82,7 +76,7 @@ export function getMockCurrentUser(data) {
   ];
 
   const totalScore = mockSubjects.reduce(
-    (sum, subject) => sum + subject.totalMarkScored,
+    (sum, s) => sum + s.totalMarkScored,
     0
   );
 
@@ -98,12 +92,12 @@ export function getMockCurrentUser(data) {
   };
 }
 
-// Starting rank calculation
+// Starting rank for current page
 export function getStartingRank(currentPage, limit) {
   return currentPage === 1 ? 4 : (currentPage - 1) * limit + 1;
 }
 
-// Get table data
+// Slice leaderboard data for table display
 export function getTableData(leaderboardData, currentPage) {
   return currentPage === 1 ? leaderboardData.slice(3) : leaderboardData;
 }
@@ -111,20 +105,13 @@ export function getTableData(leaderboardData, currentPage) {
 // Medal icon based on rank
 export function getMedalIcon(rank, isCurrentUser = false) {
   if (isCurrentUser) return null;
-
-  switch (rank) {
-    case 1:
-      return "1st-place-medal";
-    case 2:
-      return "2nd-place-medal";
-    case 3:
-      return "3rd-place-medal";
-    default:
-      return null;
-  }
+  if (rank === 1) return "1st-place-medal";
+  if (rank === 2) return "2nd-place-medal";
+  if (rank === 3) return "3rd-place-medal";
+  return null;
 }
 
-// Subject icon mapping
+// Subject icon based on name
 export function getSubjectIcon(subjectName) {
   const name = subjectName.toLowerCase();
   if (name.includes("phys")) return "physics-icon";
@@ -133,10 +120,9 @@ export function getSubjectIcon(subjectName) {
   return "checks";
 }
 
-// Card class based on rank
+// CSS classes for leaderboard cards
 export function getLeaderboardCardClass(rank, isCurrentUser = false) {
   if (isCurrentUser) return "leaderboard-card--current-user";
-
   switch (rank) {
     case 1:
       return "leaderboard-card--rank1";
@@ -149,10 +135,9 @@ export function getLeaderboardCardClass(rank, isCurrentUser = false) {
   }
 }
 
-// Badge class based on rank
+// CSS classes for rank badges
 export function getRankBadgeClass(rank, isCurrentUser = false) {
   if (isCurrentUser) return "rank-badge--current-user";
-
   switch (rank) {
     case 1:
       return "rank-badge--rank1";
@@ -165,7 +150,7 @@ export function getRankBadgeClass(rank, isCurrentUser = false) {
   }
 }
 
-// Rank ordinal string
+// Convert numeric rank to ordinal
 export function formatRankOrdinal(rank) {
   if (rank === 1) return "1st";
   if (rank === 2) return "2nd";
@@ -175,22 +160,12 @@ export function formatRankOrdinal(rank) {
 
 // Convert current user info to leaderboard entry
 export function convertCurrentUserToEntry(user) {
-  return {
-    rank: user.rank,
-    userId: user.userId,
-    totalMarkScored: user.totalMarkScored,
-    accuracy: user.accuracy,
-    subjects: user.subjects,
-    marksGained: user.marksGained,
-    marksLost: user.marksLost,
-    unansweredMarks: user.unansweredMarks,
-  };
+  return { ...user };
 }
 
 // Mock leaderboard entry
 export function mockLeaderboardEntry(topEntries) {
   const mockSubjects = [];
-
   if (topEntries.length > 0 && topEntries[0].subjects.length > 0) {
     topEntries[0].subjects.forEach((subj) => {
       mockSubjects.push({
@@ -220,7 +195,7 @@ export function mockLeaderboardEntry(topEntries) {
   }
 
   const totalScore = mockSubjects.reduce(
-    (sum, subject) => sum + subject.totalMarkScored,
+    (sum, s) => sum + s.totalMarkScored,
     0
   );
 
@@ -236,11 +211,10 @@ export function mockLeaderboardEntry(topEntries) {
   };
 }
 
-// Sorting types
+// Sorting leaderboard data
 export function sortLeaderboardData(data, field, direction) {
   return [...data].sort((a, b) => {
-    let aValue;
-    let bValue;
+    let aValue, bValue;
 
     switch (field) {
       case "rank":
@@ -281,42 +255,164 @@ export function sortLeaderboardData(data, field, direction) {
         : bValue.localeCompare(aValue);
     }
 
-    const comparison = aValue - bValue;
-    return direction === "asc" ? comparison : -comparison;
+    return direction === "asc" ? aValue - bValue : bValue - aValue;
   });
 }
 
 // Filter leaderboard data
 export function filterLeaderboardData(data, criteria) {
-  return data.filter((entry) => {
-    if (criteria.searchTerm) {
-      const searchLower = criteria.searchTerm.toLowerCase().trim();
-      if (!entry.userId.name.toLowerCase().includes(searchLower)) return false;
-    }
-    if (criteria.scoreRange) {
-      const { min, max } = criteria.scoreRange;
-      if (entry.totalMarkScored < min || entry.totalMarkScored > max)
-        return false;
-    }
-    if (criteria.accuracyRange) {
-      const { min, max } = criteria.accuracyRange;
-      if (entry.accuracy < min || entry.accuracy > max) return false;
-    }
-    if (criteria.subjects && criteria.subjects.length > 0) {
-      const hasGoodSubjectScores = criteria.subjects.some(
+  let filteredData = data;
+
+  if (criteria.searchTerm) {
+    const searchLower = criteria.searchTerm.toLowerCase().trim();
+    filteredData = filteredData.filter((entry) =>
+      entry.userId.name.toLowerCase().includes(searchLower)
+    );
+  }
+
+  if (criteria.scoreRange) {
+    const { min, max } = criteria.scoreRange;
+    filteredData = filteredData.filter(
+      (entry) => entry.totalMarkScored >= min && entry.totalMarkScored <= max
+    );
+  }
+
+  if (criteria.accuracyRange) {
+    const { min, max } = criteria.accuracyRange;
+    filteredData = filteredData.filter(
+      (entry) => entry.accuracy >= min && entry.accuracy <= max
+    );
+  }
+
+  if (criteria.subjects && criteria.subjects.length > 0) {
+    filteredData = filteredData.filter((entry) => {
+      return criteria.subjects.some(
         (subject) => getSubjectScore(entry, subject) > 50
       );
-      if (!hasGoodSubjectScores) return false;
-    }
-    return true;
-  });
+    });
+  }
+
+  return filteredData;
 }
 
-// Get all available subjects from data
+// Get unique subjects from leaderboard
 export function getAvailableSubjects(data) {
   const subjects = new Set();
   data.forEach((entry) => {
     entry.subjects.forEach((subject) => subjects.add(subject.subjectId.title));
   });
   return Array.from(subjects);
+}
+
+// Social share utilities
+export function generateShareData(currentUser) {
+  return {
+    title: "JEE Main Achievement",
+    text: `Just achieved rank #${
+      currentUser.rank
+    } in JEE Main Test Series! Scored ${
+      currentUser.totalMarkScored
+    }/300 with ${currentUser.accuracy.toFixed(1)}% accuracy`,
+    url: window.location.href,
+    hashtags: ["JEEMain", "Achievement", "TestSeries"],
+  };
+}
+
+export function getSocialPlatforms(shareData) {
+  const { text, url, title } = shareData;
+
+  return [
+    {
+      name: "WhatsApp",
+      icon: "whatsapp",
+      color: "var(--q3-base-green)",
+      shareUrl: `https://wa.me/?text=${encodeURIComponent(
+        `${text}\n\n${url}`
+      )}`,
+    },
+    {
+      name: "Twitter",
+      icon: "twitter",
+      color: "var(--q3-base-blue)",
+      shareUrl: `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+        text
+      )}&url=${encodeURIComponent(url)}`,
+    },
+    {
+      name: "LinkedIn",
+      icon: "linkedin",
+      color: "var(--q3-base-indigo)",
+      shareUrl: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+        url
+      )}&title=${encodeURIComponent(title)}&summary=${encodeURIComponent(
+        text
+      )}`,
+    },
+    {
+      name: "Facebook",
+      icon: "facebook",
+      color: "var(--q3-base-blue)",
+      shareUrl: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+        url
+      )}&quote=${encodeURIComponent(text)}`,
+    },
+    {
+      name: "Telegram",
+      icon: "telegram",
+      color: "var(--q3-base-sky)",
+      shareUrl: `https://t.me/share/url?url=${encodeURIComponent(
+        url
+      )}&text=${encodeURIComponent(text)}`,
+    },
+  ];
+}
+
+// Achievement levels
+export function getAchievementLevel(rank) {
+  if (rank <= 3)
+    return {
+      title: "Elite Champion",
+      color: "var(--q3-base-yellow)",
+      icon: "crown",
+    };
+  if (rank <= 10)
+    return {
+      title: "Top Performer",
+      color: "var(--q3-base-orange)",
+      icon: "medal",
+    };
+  if (rank <= 50)
+    return {
+      title: "High Achiever",
+      color: "var(--q3-base-blue)",
+      icon: "target",
+    };
+  return { title: "Rising Star", color: "var(--q3-base-green)", icon: "star" };
+}
+
+// Clipboard utility
+export async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Open social share window
+export function openSocialShare(url) {
+  window.open(
+    url,
+    "_blank",
+    "width=600,height=400,scrollbars=yes,resizable=yes"
+  );
+}
+
+// Get rank suffix
+export function getRankSuffix(rank) {
+  if (rank === 1) return "st";
+  if (rank === 2) return "nd";
+  if (rank === 3) return "rd";
+  return "th";
 }

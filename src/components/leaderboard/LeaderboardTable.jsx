@@ -204,13 +204,15 @@ const LeaderboardTable = ({
     );
   };
 
-  const renderAccuracy = (accuracy) => (
-    <div className="flex items-center justify-center">
-      <span className="font-medium text-base text-foreground">
-        {formatAccuracy(accuracy)}
-      </span>
-    </div>
-  );
+  const renderAccuracy = (accuracy) => {
+    return (
+      <div className="flex items-center justify-center">
+        <span className="font-medium text-base text-foreground">
+          {formatAccuracy(accuracy)}
+        </span>
+      </div>
+    );
+  };
 
   const renderSortIcon = (columnId) => {
     if (sortField !== columnId)

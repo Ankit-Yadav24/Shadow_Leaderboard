@@ -68,3 +68,68 @@
  * @property {number} [lastRank]
  * @property {number} [userRank]
  */
+
+/**
+ * @typedef {Object} SocialPlatform
+ * @property {string} name
+ * @property {string} icon
+ * @property {string} color
+ * @property {string} shareUrl
+ */
+
+/**
+ * @typedef {Object} ShareData
+ * @property {string} title
+ * @property {string} text
+ * @property {string} url
+ * @property {string[]} [hashtags]
+ */
+
+/**
+ * @typedef {Object} AchievementLevel
+ * @property {string} title
+ * @property {string} color
+ * @property {string} icon
+ */
+
+/**
+ * @typedef {Object} SocialShareProps
+ * @property {CurrentUserInfo} currentUser
+ * @property {'icon' | 'button'} [variant]
+ * @property {'sm' | 'default' | 'lg'} [size]
+ * @property {string} [className]
+ */
+
+/**
+ * @typedef {Object} AchievementModalProps
+ * @property {boolean} isOpen
+ * @property {() => void} onClose
+ * @property {CurrentUserInfo} currentUser
+ */
+
+/**
+ * @typedef {Object} ChartData
+ * @property {string[]} labels
+ * @property {Array<{
+ *   label: string,
+ *   data: number[],
+ *   backgroundColor: string | string[],
+ *   borderColor: string | string[],
+ *   borderWidth?: number,
+ *   tension?: number
+ * }>} datasets
+ */
+
+/**
+ * @typedef {Object} AnalyticsData
+ * @property {ChartData} scoreDistribution
+ * @property {ChartData} subjectPerformance
+ * @property {ChartData} accuracyTrend
+ * @property {ChartData} topPerformersComparison
+ */
+
+/**
+ * @typedef {Object} AnalyticsProps
+ * @property {LeaderboardEntry[]} leaderboardData
+ * @property {CurrentUserInfo | null} [currentUser]
+ */
