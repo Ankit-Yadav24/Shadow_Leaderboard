@@ -22,7 +22,7 @@ const TopPerformers = ({ topThree, currentUser }) => {
   ];
 
   return (
-    <div className="flex items-stretch gap-5 pb-4">
+    <div className="hidden md:flex items-stretch gap-3 lg:gap-5 pb-4 overflow-x-auto">
       {cards.map((card, index) => (
         <LeaderboardCard
           key={index}
