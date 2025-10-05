@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { useLeaderboardData } from "../../hooks/LeaderboardDataUses";
-import ActionBar from "../common/ActionBar";
-import TopPerformers from "./TopPerformers";
-import LeaderboardTable from "./LeaderboardTable";
-import CurrentUserCard from "./CurrentUserCard";
+import { useLeaderboardData } from "../hooks/LeaderboardDataUses";
+import ActionBar from "../components/common/ActionBar";
+import TopPerformers from "../components/leaderboard/TopPerformers";
+import LeaderboardTable from "../components/leaderboard/LeaderboardTable";
+import CurrentUserCard from "../components/leaderboard/CurrentUserCard";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getMockCurrentUser,
   getStartingRank,
   getTableData,
-} from "../../lib/utils";
-import "../../assets/styles/Leaderboard.css";
-import Pagination from "./Pagination";
+} from "../lib/utils";
+import "../assets/styles/Leaderboard.css";
+import Pagination from "../components/leaderboard/Pagination";
 
 const LeaderboardPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
