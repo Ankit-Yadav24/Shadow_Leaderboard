@@ -1,7 +1,7 @@
 import React from "react";
 import Icon from "./Icon";
 import Breadcrumbs from "./Breadcrumbs";
-import { ThemeToggle } from "../theme/theme-toggle";
+import { ThemeToggle } from "../theme/themeToggle";
 
 const ActionBar = () => {
   const breadcrumbItems = [
