@@ -31,7 +31,7 @@ const Tabs = ({ activeTab, onTabChange, availableSubjects }) => {
 
   return (
     <div className="w-full overflow-x-auto">
-      <div
+      {/* <div
         className="flex h-9 items-center rounded-md p-1 text-muted-foreground w-full"
         style={{
           background: "var(--q3-surface-dim)",
@@ -60,7 +60,7 @@ const Tabs = ({ activeTab, onTabChange, availableSubjects }) => {
             {tab.label}
           </button>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 };

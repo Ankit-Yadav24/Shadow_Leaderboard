@@ -41,7 +41,7 @@ const TopPerformers = ({ topThree, currentUser, onAnalyticsClick }) => {
             <span className="hidden sm:inline">Analytics</span>
           </Button> */}
 
-          {currentUser && (
+          {/* {currentUser && (
             <>
               <Button
                 variant="outline"
@@ -54,7 +54,7 @@ const TopPerformers = ({ topThree, currentUser, onAnalyticsClick }) => {
               </Button>
               <SocialShare currentUser={currentUser} variant="icon" />
             </>
-          )}
+          )} */}
         </div>
       </div>
 
