@@ -1,52 +1,158 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { ScrollSync, ScrollSyncPane } from "react-scroll-sync";
 import { useLeaderboardData } from "../hooks/LeaderboardDataUses";
 import ActionBar from "../components/common/ActionBar";
 import TopPerformers from "../components/leaderboard/TopPerformers";
 import LeaderboardTable from "../components/leaderboard/LeaderboardTable";
 import CurrentUserCard from "../components/leaderboard/CurrentUserCard";
+import CollapsibleFilterSection from "../components/leaderboard/CollapsibleFilterSection";
+import AnalyticsSection from "../components/leaderboard/AnalyticSection";
+import LeaderboardSkeleton from "../components/common/LeaderboardSkeleton";
+import TableSkeleton from "../components/common/TableSkeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getMockCurrentUser,
   getStartingRank,
   getTableData,
+  filterLeaderboardData,
+  getAvailableSubjects,
+  getSubjectScore,
 } from "../lib/utils";
-import "../assets/styles/Leaderboard.css";
 import Pagination from "../components/leaderboard/Pagination";
+
+const SCROLL_BREAKPOINT = 1200;
 
 const LeaderboardPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("overall");
+  const [filters, setFilters] = useState({});
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
   const limit = 10;
 
   const [initialTopThree, setInitialTopThree] = useState([]);
   const [initialCurrentUser, setInitialCurrentUser] = useState(null);
-  const [isCurrentUserInView, setIsCurrentUserInView] = useState(false);
 
   const tableContainerRef = useRef(null);
 
   const { leaderboardData, currentUser, totalPages, isLoading, error } =
-    useLeaderboardData({ page: currentPage, limit });
+    useLeaderboardData({
+      page: currentPage,
+      limit,
+    });
 
-  const tableData = useMemo(
-    () => getTableData(leaderboardData, currentPage),
-    [currentPage, leaderboardData]
-  );
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsSmallScreen(window.innerWidth <= SCROLL_BREAKPOINT);
+    };
 
-  const startingRank = useMemo(
-    () => getStartingRank(currentPage, limit),
-    [currentPage, limit]
-  );
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => {
+      window.removeEventListener("resize", checkScreenSize);
+    };
+  }, []);
+
+  const processedData = useMemo(() => {
+    let data = [...leaderboardData];
+    data = filterLeaderboardData(data, filters);
+
+    switch (activeTab) {
+      case "topPerformers":
+        data = data.slice(0, 10);
+        break;
+      case "physics":
+        data = data
+          .filter((entry) =>
+            entry.subjects.some((s) =>
+              s.subjectId.title.toLowerCase().includes("physics")
+            )
+          )
+          .sort(
+            (a, b) =>
+              getSubjectScore(b, "physics") - getSubjectScore(a, "physics")
+          );
+        break;
+      case "chemistry":
+        data = data
+          .filter((entry) =>
+            entry.subjects.some((s) =>
+              s.subjectId.title.toLowerCase().includes("chemistry")
+            )
+          )
+          .sort(
+            (a, b) =>
+              getSubjectScore(b, "chemistry") - getSubjectScore(a, "chemistry")
+          );
+        break;
+      case "maths":
+        data = data
+          .filter((entry) =>
+            entry.subjects.some((s) =>
+              s.subjectId.title.toLowerCase().includes("math")
+            )
+          )
+          .sort(
+            (a, b) => getSubjectScore(b, "maths") - getSubjectScore(a, "maths")
+          );
+        break;
+      default:
+        data = data.sort((a, b) => a.rank - b.rank);
+        break;
+    }
+
+    return data;
+  }, [leaderboardData, filters, activeTab]);
+
+  const processedTotalPages = useMemo(() => {
+    if (
+      activeTab === "overall" &&
+      Object.keys(filters).length === 0 &&
+      totalPages > 0
+    ) {
+      return totalPages;
+    }
+
+    const calculatedPages = Math.ceil(processedData.length / limit);
+    return Math.max(calculatedPages, 1);
+  }, [processedData.length, limit, activeTab, totalPages, filters]);
+
+  const tableData = useMemo(() => {
+    if (activeTab === "overall" && Object.keys(filters).length === 0) {
+      return getTableData(processedData, currentPage);
+    }
+
+    const startIndex = (currentPage - 1) * limit;
+    const endIndex = startIndex + limit;
+    return processedData.slice(startIndex, endIndex);
+  }, [processedData, currentPage, limit, activeTab, filters]);
+
+  const startingRank = useMemo(() => {
+    if (activeTab === "overall") {
+      return getStartingRank(currentPage, limit);
+    }
+    return (currentPage - 1) * limit + 1;
+  }, [currentPage, limit, activeTab]);
 
   const topThreeToDisplay = useMemo(() => {
-    return initialTopThree.length > 0
-      ? initialTopThree
-      : leaderboardData.slice(0, 3);
-  }, [initialTopThree, leaderboardData]);
+    if (activeTab === "overall") {
+      return initialTopThree.length > 0
+        ? initialTopThree
+        : processedData.slice(0, 3);
+    }
+    return processedData.slice(0, 3);
+  }, [initialTopThree, processedData, activeTab]);
 
   const userToDisplay = useMemo(() => {
     return (
       initialCurrentUser || currentUser || getMockCurrentUser(leaderboardData)
     );
   }, [initialCurrentUser, currentUser, leaderboardData]);
+
+  const availableSubjects = useMemo(() => {
+    return getAvailableSubjects(leaderboardData);
+  }, [leaderboardData]);
 
   useEffect(() => {
     if (leaderboardData.length > 0 && initialTopThree.length === 0) {
@@ -61,45 +167,13 @@ const LeaderboardPage = () => {
   }, [leaderboardData, currentUser, initialTopThree.length]);
 
   useEffect(() => {
-    if (!userToDisplay) return;
-
-    const userInCurrentPage = tableData.some(
-      (entry) => entry.userId._id === userToDisplay.userId._id
-    );
-
-    setIsCurrentUserInView(userInCurrentPage);
-  }, [tableData, userToDisplay]);
-
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-
-    const timeoutId = setTimeout(() => {
-      const currentUserRow = document.querySelector(
-        '[data-current-user="true"]'
-      );
-
-      if (currentUserRow) {
-        const observer = new IntersectionObserver(
-          (entries) => {
-            entries.forEach((entry) => {
-              setIsCurrentUserInView(entry.isIntersecting);
-            });
-          },
-          { threshold: 0.1, rootMargin: "0px 0px 0px 0px" }
-        );
-
-        observer.observe(currentUserRow);
-
-        return () => observer.unobserve(currentUserRow);
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
+    if (tableContainerRef.current) {
+      tableContainerRef.current.scrollTop = 0;
+    }
   }, [tableData, currentPage]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
-
     if (tableContainerRef.current) {
       tableContainerRef.current.scrollIntoView({
         behavior: "smooth",
@@ -108,44 +182,31 @@ const LeaderboardPage = () => {
     }
   };
 
-  const MobilePaginationComponent = () => {
-    if (totalPages <= 1) return null;
-
-    return (
-      <motion.div
-        className="px-3 py-4"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
-      >
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          className="py-0"
-        />
-      </motion.div>
-    );
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+    setFilters({});
   };
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+  };
+
+  const handleAnalyticsClick = () => setShowAnalytics(true);
+  const handleBackClick = () => setShowAnalytics(false);
 
   const renderContent = () => {
     if (isLoading && leaderboardData.length === 0) {
       return (
         <motion.div
           key="loading"
-          className="bg-card rounded-xl shadow-md p-4 sm:p-8 text-center mx-3 sm:mx-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.4 }}
         >
-          <motion.p
-            className="text-base sm:text-lg text-muted-foreground"
-            animate={{ opacity: [0.6, 1, 0.6] }}
-            transition={{ repeat: Infinity, duration: 1.5 }}
-          >
-            Loading leaderboard data...
-          </motion.p>
+          <LeaderboardSkeleton />
         </motion.div>
       );
     }
@@ -159,9 +220,36 @@ const LeaderboardPage = () => {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.3 }}
+          role="alert"
+          aria-live="polite"
         >
           <h2 className="font-bold mb-2">Error</h2>
           <p>{error instanceof Error ? error.message : String(error)}</p>
+        </motion.div>
+      );
+    }
+
+    if (showAnalytics) {
+      return (
+        <motion.div
+          key="analytics-content"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
+          className="space-y-4 sm:space-y-6"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="px-3 sm:px-6"
+          >
+            <AnalyticsSection
+              leaderboardData={leaderboardData}
+              currentUser={userToDisplay}
+            />
+          </motion.div>
         </motion.div>
       );
     }
@@ -181,137 +269,148 @@ const LeaderboardPage = () => {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="px-3 sm:px-6"
         >
-          <TopPerformers
-            topThree={topThreeToDisplay}
-            currentUser={userToDisplay}
+          <CollapsibleFilterSection
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            onFilterChange={handleFilterChange}
+            availableSubjects={availableSubjects}
+            activeFilters={filters}
           />
         </motion.div>
 
-        <div className="hidden md:block">
-          <div className="relative" ref={tableContainerRef}>
-            <AnimatePresence mode="wait">
-              {isLoading ? (
-                <motion.div
-                  key="page-loading"
-                  className="py-4 pb-1 sm:py-8 text-center px-3 sm:px-6"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <motion.p
-                    className="text-sm text-muted-foreground"
-                    animate={{ opacity: [0.6, 1, 0.6] }}
-                    transition={{ repeat: Infinity, duration: 1.5 }}
-                  >
-                    #MathBoleTohMathonGo
-                  </motion.p>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="table-content"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="px-3 sm:px-6"
-                >
-                  <LeaderboardTable
-                    leaderboardData={tableData}
-                    currentUserId={userToDisplay?.userId._id}
-                    startingRank={startingRank}
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="px-3 sm:px-6"
+        >
+          <TopPerformers
+            topThree={topThreeToDisplay}
+            currentUser={userToDisplay}
+            onAnalyticsClick={handleAnalyticsClick}
+          />
+        </motion.div>
 
-        <div className="block md:hidden">
-          <div ref={tableContainerRef}>
-            <AnimatePresence mode="wait">
-              {isLoading ? (
-                <motion.div
-                  key="page-loading"
-                  className="py-8 text-center px-3"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <motion.p
-                    className="text-sm text-muted-foreground"
-                    animate={{ opacity: [0.6, 1, 0.6] }}
-                    transition={{ repeat: Infinity, duration: 1.5 }}
+        <div ref={tableContainerRef}>
+          <AnimatePresence mode="wait">
+            {isLoading ? (
+              <motion.div
+                key="table-loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="px-3 sm:px-6"
+              >
+                <TableSkeleton rows={limit} />
+              </motion.div>
+            ) : (
+              <ScrollSync proportional enabled={isSmallScreen}>
+                <div className="w-full">
+                  <motion.div
+                    key={`table-${currentPage}-${activeTab}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                    className="px-3 sm:px-6"
                   >
-                    #MathBoleTohMathonGo
-                  </motion.p>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="table-content"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.4, ease: "easeInOut" }}
-                  className="space-y-0"
-                >
-                  <div className="px-3">
-                    <LeaderboardTable
-                      leaderboardData={tableData}
-                      currentUserId={userToDisplay?.userId._id}
-                      startingRank={startingRank}
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={handlePageChange}
-                      hidePagination={true}
-                      showCurrentUserAsLastRow={true}
-                      currentUserData={userToDisplay}
-                    />
-                  </div>
-                  <MobilePaginationComponent />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                    <div className="rounded-xl overflow-hidden">
+                      <ScrollSyncPane>
+                        <div
+                          className="bg-muted/5"
+                          style={{
+                            overflowX: isSmallScreen ? "auto" : "visible",
+                            overflowY: "hidden",
+                          }}
+                        >
+                          <div
+                            className={
+                              isSmallScreen ? "min-w-[1136px]" : "w-full"
+                            }
+                          >
+                            <LeaderboardTable
+                              leaderboardData={tableData}
+                              currentUserId={userToDisplay?.userId._id}
+                              startingRank={startingRank}
+                              currentPage={currentPage}
+                              totalPages={processedTotalPages}
+                              onPageChange={handlePageChange}
+                              hidePagination={isSmallScreen}
+                            />
+                          </div>
+                        </div>
+                      </ScrollSyncPane>
+                    </div>
+                  </motion.div>
+
+                  {isSmallScreen && processedTotalPages > 1 && (
+                    <motion.div
+                      className="px-3 py-4"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: 0.2 }}
+                    >
+                      <Pagination
+                        currentPage={currentPage}
+                        totalPages={processedTotalPages}
+                        onPageChange={handlePageChange}
+                        className="py-0"
+                      />
+                    </motion.div>
+                  )}
+
+                  {isSmallScreen && (
+                    <ScrollSyncPane>
+                      <motion.div
+                        className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm z-10 w-full"
+                        initial={{ y: 100, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                        style={{
+                          overflowX: "auto",
+                          overflowY: "hidden",
+                        }}
+                      >
+                        <div className="min-w-[1136px]">
+                          {userToDisplay && (
+                            <CurrentUserCard currentUser={userToDisplay} />
+                          )}
+                        </div>
+                      </motion.div>
+                    </ScrollSyncPane>
+                  )}
+                </div>
+              </ScrollSync>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <ActionBar />
+    <div className="min-h-screen bg-background flex flex-col">
+      <ActionBar onBackClick={handleBackClick} />
 
-      <div className="w-full">
-        <div className="hidden md:block w-full py-4 pb-1 sm:py-6">
+      <main className="w-full">
+        <div className="w-full py-4 pb-1 sm:py-6">
           <div className="max-w-[1176px] mx-auto">
             <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
           </div>
         </div>
+      </main>
 
-        <div className="block md:hidden w-full py-4 pb-1">
-          <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
-        </div>
-      </div>
-
-      <motion.div
-        className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border/50 hidden md:block z-10"
-        initial={{ y: 100, opacity: 0 }}
-        animate={{
-          y: isCurrentUserInView ? 100 : 0,
-          opacity: isCurrentUserInView ? 0 : 1,
-        }}
-        transition={{ duration: 0.3 }}
-        style={{ pointerEvents: isCurrentUserInView ? "none" : "auto" }}
-      >
-        <div className="max-w-[1176px] mx-auto px-3 sm:px-6 py-3">
+      {!showAnalytics && !isSmallScreen && (
+        <motion.div
+          className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm z-10 w-full"
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
           {userToDisplay && <CurrentUserCard currentUser={userToDisplay} />}
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 };
