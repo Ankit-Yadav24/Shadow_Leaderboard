@@ -105,15 +105,11 @@ const Filters = ({ onFilterChange, availableSubjects, activeFilters }) => {
     return `${range.min}-${range.max}`;
   };
 
-  const getAccuracyRangeLabel = (range) => {
-    return `${range.min}%-${range.max}%`;
-  };
+  const getAccuracyRangeLabel = (range) => `${range.min}%-${range.max}%`;
 
   return (
     <div className="space-y-3">
-      {/* Search and Filter Controls in One Row */}
       <div className="flex gap-2">
-        {/* Search Input */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -125,7 +121,6 @@ const Filters = ({ onFilterChange, availableSubjects, activeFilters }) => {
           />
         </div>
 
-        {/* Filters Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="gap-2 h-9">
@@ -141,7 +136,11 @@ const Filters = ({ onFilterChange, availableSubjects, activeFilters }) => {
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end">
+
+          <DropdownMenuContent
+            className="w-56 dark:bg-[#181d21] bg-white"
+            align="end"
+          >
             <DropdownMenuLabel>Filter Options</DropdownMenuLabel>
             <DropdownMenuSeparator />
 
@@ -194,7 +193,6 @@ const Filters = ({ onFilterChange, availableSubjects, activeFilters }) => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Clear All Button */}
         {hasActiveFilters && (
           <Button
             variant="ghost"
@@ -208,7 +206,6 @@ const Filters = ({ onFilterChange, availableSubjects, activeFilters }) => {
         )}
       </div>
 
-      {/* Active Filter Chips */}
       {hasActiveFilters && (
         <div className="flex flex-wrap gap-1">
           {activeFilters.searchTerm && (

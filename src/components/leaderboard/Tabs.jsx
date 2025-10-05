@@ -7,14 +7,25 @@ const Tabs = ({ activeTab, onTabChange, availableSubjects }) => {
     { id: "topPerformers", label: "Top 10" },
   ];
 
-  // Add subject-specific tabs based on available subjects
+  const addedSubjects = new Set();
+
   availableSubjects.forEach((subject) => {
-    if (subject.toLowerCase().includes("physics")) {
-      tabs.push({ id: "physics", label: "Physics" });
-    } else if (subject.toLowerCase().includes("chemistry")) {
-      tabs.push({ id: "chemistry", label: "Chemistry" });
-    } else if (subject.toLowerCase().includes("math")) {
-      tabs.push({ id: "maths", label: "Maths" });
+    const subjectLower = subject.toLowerCase();
+    if (subjectLower.includes("physics") && !addedSubjects.has("physics")) {
+      tabs.splice(1, 0, { id: "physics", label: "Physics" });
+      addedSubjects.add("physics");
+    } else if (
+      subjectLower.includes("chemistry") &&
+      !addedSubjects.has("chemistry")
+    ) {
+      tabs.splice(1, 0, { id: "chemistry", label: "Chemistry" });
+      addedSubjects.add("chemistry");
+    } else if (
+      (subjectLower.includes("math") || subjectLower.includes("mathematics")) &&
+      !addedSubjects.has("maths")
+    ) {
+      tabs.splice(1, 0, { id: "maths", label: "Maths" });
+      addedSubjects.add("maths");
     }
   });
 
