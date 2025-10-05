@@ -73,6 +73,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  --mode-pagination-color: rgb(67, 45, 215);
+  --mode-pagination-text-color: white;
   --q3-base-red: #e02a5e;
   --q3-base-orange: #ff7000;
   --q3-base-green: #00893c;
@@ -225,6 +228,9 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.439 0 0);
+  /* Pagination specific variables */
+  --mode-pagination-color: rgb(163, 179, 255);
+  --mode-pagination-text-color: rgb(20, 20, 30);
   --q3-base-red: #ff6654;
   --q3-base-orange: #ff7000;
   --q3-base-green: #36bb43;
@@ -350,11 +356,14 @@ body {
   color: var(--foreground);
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
+@keyframes highlightRow {
+  0% {
+    background-color: var(--primary-foreground);
   }
-  body {
-    @apply bg-background text-foreground;
+  50% {
+    background-color: var(--primary);
+  }
+  100% {
+    background-color: var(--primary-foreground);
   }
 }

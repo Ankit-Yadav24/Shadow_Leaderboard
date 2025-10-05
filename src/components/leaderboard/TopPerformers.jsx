@@ -1,0 +1,38 @@
+import React from "react";
+import LeaderboardCard from "./LeaderboardCard";
+import {
+  convertCurrentUserToEntry,
+  mockLeaderboardEntry,
+} from "../../lib/utils";
+
+const TopPerformers = ({ topThree, currentUser }) => {
+  const currentUserEntry = currentUser
+    ? convertCurrentUserToEntry(currentUser)
+    : mockLeaderboardEntry(topThree);
+
+  const cards = [
+    { entry: topThree[0] || null, rank: 1, isCurrentUser: false },
+    { entry: topThree[1] || null, rank: 2, isCurrentUser: false },
+    { entry: topThree[2] || null, rank: 3, isCurrentUser: false },
+    {
+      entry: currentUserEntry,
+      rank: currentUser?.rank || currentUserEntry.rank,
+      isCurrentUser: true,
+    },
+  ];
+
+  return (
+    <div className="flex items-stretch gap-5 pb-4">
+      {cards.map((card, index) => (
+        <LeaderboardCard
+          key={index}
+          entry={card.entry}
+          rank={card.rank}
+          isCurrentUser={card.isCurrentUser}
+        />
+      ))}
+    </div>
+  );
+};
+
+export default TopPerformers;
