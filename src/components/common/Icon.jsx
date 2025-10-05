@@ -28,9 +28,9 @@ const iconMap = {
 };
 
 const medalIcons = {
-  "1st-place-medal": "/src/assets/icons/1st-place-medal.svg",
-  "2nd-place-medal": "/src/assets/icons/2nd-place-medal.svg",
-  "3rd-place-medal": "/src/assets/icons/3rd-place-medal.svg",
+  "1st-place-medal": "Medal1st",
+  "2nd-place-medal": "Medal2nd",
+  "3rd-place-medal": "Medal3d",
 };
 
 const Icon = ({
