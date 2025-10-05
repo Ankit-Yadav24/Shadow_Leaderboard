@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useLeaderboardData } from "../../hooks/useLeaderboardData";
-import ActionBar from "../shared/ActionBar";
+import ActionBar from "../components/common/ActionBar";
 import TopPerformers from "./TopPerformers";
 import LeaderboardTable from "./LeaderboardTable";
 import CurrentUserCard from "./CurrentUserCard";
@@ -10,7 +10,7 @@ import {
   getStartingRank,
   getTableData,
 } from "../../lib/utils";
-import "../../assets/styles/LeaderboardPage.css";
+import "../../assets/styles/Leaderboard.css";
 
 const LeaderboardPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
